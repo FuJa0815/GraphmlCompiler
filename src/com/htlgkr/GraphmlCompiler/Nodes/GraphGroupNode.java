@@ -2,15 +2,17 @@ package com.htlgkr.GraphmlCompiler.Nodes;
 
 import org.w3c.dom.Element;
 
+import java.util.List;
+
 public class GraphGroupNode extends GraphMultiNode {
-    GraphGroupNode graphNode;
+    GraphGraphNode graphNode;
     public GraphGroupNode(Element nodeElement) {
         super(nodeElement);
-        graphNode = new GraphGroupNode((Element)nodeElement.getElementsByTagName("graph").item(0));
+        graphNode = new GraphGraphNode(NodeHelper.getFirstChildrenWithTag(nodeElement, "graph"));
     }
 
     @Override
-    public Iterable<GraphNode> GetSubGraphNodes() {
-        return graphNode.GetSubGraphNodes();
+    public List<GraphNode> getSubGraphNodes() {
+        return graphNode.getSubGraphNodes();
     }
 }

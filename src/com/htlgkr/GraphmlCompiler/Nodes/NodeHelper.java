@@ -2,14 +2,13 @@ package com.htlgkr.GraphmlCompiler.Nodes;
 
 import com.htlgkr.GraphmlCompiler.Edges.GraphEdge;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.logging.StreamHandler;
 import java.util.stream.StreamSupport;
 
 public final class NodeHelper {
@@ -30,10 +29,10 @@ public final class NodeHelper {
     }
 
     public static NodeList getStyleProperties(Element nodeElement) {
-        Element data = (Element)nodeElement.getElementsByTagName("data").item(0);
-        Element yGenericNode = (Element)data.getElementsByTagName("y:GenericNode").item(0);
-        Element styleProperties = (Element)yGenericNode.getElementsByTagName("y:StyleProperties");
-        return styleProperties.getElementsByTagName("y:Property");
+        Element data = getFirstChildrenWithTag(nodeElement, "data");
+        Element yGenericNode = getFirstChildrenWithTag(data, "y:GenericNode");
+        Element styleProperties = getFirstChildrenWithTag(yGenericNode, "y:StyleProperties");
+        return getDirectChildrenWithTag(styleProperties, "y:Property");
     }
 
     public static String getValueInPropertyList(NodeList properties, String className) {
@@ -44,10 +43,27 @@ public final class NodeHelper {
     }
 
     public static String getLabel(Element nodeElement) {
-        Element data = (Element)nodeElement.getElementsByTagName("data").item(0);
-        Element yGenericNode = (Element)data.getElementsByTagName("y:GenericNode").item(0);
-        Element yNodeLabel = (Element)yGenericNode.getElementsByTagName("y:NodeLabel").item(0);
+        Element data = getFirstChildrenWithTag(nodeElement, "data");
+        if (data == null) return null;
+        Element yGenericNode = getFirstChildrenWithTag(data, "y:GenericNode");
+        if (yGenericNode == null) return null;
+        Element yNodeLabel = getFirstChildrenWithTag(yGenericNode, "y:NodeLabel");
         return yNodeLabel.getTextContent();
+    }
+
+    public static GraphNode getNodeWithId(GraphNode topNode, String id) {
+        if (topNode.getId().equals(id))
+            return topNode;
+
+        if (topNode instanceof GraphMultiNode) {
+            GraphMultiNode topMultiNode = (GraphMultiNode) topNode;
+            for (GraphNode subNode : topMultiNode.getSubGraphNodes()) {
+                GraphNode tmp = getNodeWithId(subNode, id);
+                if (tmp != null) return tmp;
+            }
+        }
+
+        return null;
     }
 
     public static boolean executeForNode(GraphNode topNode, String nodeId, Consumer<GraphNode> action) {
@@ -56,7 +72,7 @@ public final class NodeHelper {
             return true;
         }
         if (topNode instanceof GraphMultiNode) {
-            for (GraphNode subNode : ((GraphMultiNode) topNode).GetSubGraphNodes()) {
+            for (GraphNode subNode : ((GraphMultiNode) topNode).getSubGraphNodes()) {
                 if (executeForNode(subNode, nodeId, action))
                     return true;
             }
@@ -67,7 +83,7 @@ public final class NodeHelper {
     public static String translateFromTopNode(GraphGraphNode topnode) {
         String content = "public class ElectionUtilGraphml { ";
 
-        for (GraphNode node : topnode.GetSubGraphNodes()) {
+        for (GraphNode node : topnode.getSubGraphNodes()) {
             if (node instanceof GraphGraphNode) {
                 content += node.getLabel() + "{";
             }
@@ -91,13 +107,40 @@ public final class NodeHelper {
         return content;
     }
 
-    private static List<GraphEdge> iterableToList(Iterable<GraphEdge> iterable) {
-        ArrayList<GraphEdge> result = new ArrayList<>();
-
-        for (GraphEdge edge: iterable) {
-            result.add(edge);
+    public static NodeList getDirectChildrenWithTag(Element element, String tag) {
+        List<Element> tmp = new ArrayList<>();
+        for (Node e : getNodeIterable(element.getChildNodes())) {
+            if (e instanceof Element) {
+                if (((Element)e).getTagName().equals(tag))
+                    tmp.add((Element)e);
+            }
         }
+        return new NodeList() {
+            @Override
+            public Node item(int index) {
+                return tmp.get(index);
+            }
 
+            @Override
+            public int getLength() {
+                return tmp.size();
+            }
+        };
+    }
+
+    public static Element getFirstChildrenWithTag(Element element, String tag) {
+        for (Node e : getNodeIterable(element.getChildNodes())) {
+            if (e instanceof Element) {
+                if (((Element)e).getTagName().equals(tag))
+                    return (Element)e;
+            }
+        }
+        return null;
+    }
+
+    public static <T> List<T> iterableToList(Iterable<T> i) {
+        List<T> result = new ArrayList<>();
+        i.forEach(result::add);
         return result;
     }
 }
