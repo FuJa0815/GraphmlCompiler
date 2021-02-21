@@ -65,20 +65,6 @@ public final class NodeHelper {
         return null;
     }
 
-    public static boolean executeForNode(GraphNode topNode, String nodeId, Consumer<GraphNode> action) {
-        if (topNode.getId().equals(nodeId)) {
-            action.accept(topNode);
-            return true;
-        }
-        if (topNode instanceof GraphMultiNode) {
-            for (GraphNode subNode : ((GraphMultiNode) topNode).getSubGraphNodes()) {
-                if (executeForNode(subNode, nodeId, action))
-                    return true;
-            }
-        }
-        return false;
-    }
-
     public static NodeList getDirectChildrenWithTag(Element element, String tag) {
         List<Element> tmp = new ArrayList<>();
         for (Node e : getNodeIterable(element.getChildNodes())) {
