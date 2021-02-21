@@ -1,5 +1,6 @@
 package com.htlgkr.GraphmlCompiler.Nodes;
 
+import com.htlgkr.GraphmlCompiler.Edges.GraphEdge;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
@@ -61,5 +62,42 @@ public final class NodeHelper {
             }
         }
         return false;
+    }
+
+    public static String translateFromTopNode(GraphGraphNode topnode) {
+        String content = "public class ElectionUtilGraphml { ";
+
+        for (GraphNode node : topnode.GetSubGraphNodes()) {
+            if (node instanceof GraphGraphNode) {
+                content += node.getLabel() + "{";
+            }
+            else if (node instanceof GraphInputNode) {
+                content += translateFromTopNodeRec(topnode, node.getOutgoingEdges());
+            }
+        }
+
+        content += "} }";
+        return content;
+    }
+
+    private static String translateFromTopNodeRec(GraphGraphNode topnode, Iterable<GraphEdge> iterable) {
+        String content = "";
+        List<GraphEdge> edges = iterableToList(iterable);
+
+        for (GraphEdge edge : edges) {
+
+        }
+
+        return content;
+    }
+
+    private static List<GraphEdge> iterableToList(Iterable<GraphEdge> iterable) {
+        ArrayList<GraphEdge> result = new ArrayList<>();
+
+        for (GraphEdge edge: iterable) {
+            result.add(edge);
+        }
+
+        return result;
     }
 }

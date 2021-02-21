@@ -15,7 +15,7 @@ public class Main {
     public static void main(String[] args) {
         Element graph;
         try {
-            graph = getTopGraphElement("C:\\tmp\\ElectionUtilBasic.graphml");
+            graph = getTopGraphElement("D:\\Programmieren\\AUD\\GraphmlCompiler\\GraphmlCompiler\\ElectionUtilBasic.graphml");
         } catch (ParserConfigurationException | IOException | SAXException e) {
             e.printStackTrace();
             return;
@@ -27,6 +27,8 @@ public class Main {
             NodeHelper.executeForNode(topGraphNode, edge.getSourceId(), node -> node.addOutgoingEdge(edge));
             NodeHelper.executeForNode(topGraphNode, edge.getTargetId(), node -> node.addIncomingEdge(edge));
         }
+
+        NodeHelper.translateFromTopNode(topGraphNode);
     }
 
     private static Element getTopGraphElement(String filename) throws ParserConfigurationException, IOException, SAXException {
