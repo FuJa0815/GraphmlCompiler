@@ -6,6 +6,7 @@ import java.util.stream.StreamSupport;
 
 public class GraphGraphNode extends GraphMultiNode {
     Element nodeElement;
+    Iterable<GraphNode> subGraphs = null;
 
     public GraphGraphNode(Element nodeElement) {
         super(nodeElement);
@@ -13,7 +14,9 @@ public class GraphGraphNode extends GraphMultiNode {
     }
 
     @Override
-    public Iterable<GraphNode> GetSubGraphNodes() {
-        return () -> StreamSupport.stream(NodeHelper.getNodeIterable(nodeElement.getElementsByTagName("node")).spliterator(), false).map(e -> GraphNodeFactory.getGraphNode(e)).iterator();
+    public Iterable<GraphNode> getSubGraphNodes() {
+        if (subGraphs == null)
+            subGraphs = () -> StreamSupport.stream(NodeHelper.getNodeIterable(NodeHelper.getDirectChildrenWithTag(nodeElement, "node")).spliterator(), false).map(e -> GraphNodeFactory.getGraphNode(e)).iterator();
+        return subGraphs;
     }
 }

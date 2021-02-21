@@ -1,6 +1,5 @@
 package com.htlgkr.GraphmlCompiler.Edges;
 
-import com.htlgkr.GraphmlCompiler.Nodes.NodeHelper;
 import org.w3c.dom.Element;
 
 public class GraphEdge {

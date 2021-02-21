@@ -2,12 +2,14 @@ package com.htlgkr.GraphmlCompiler;
 
 import com.htlgkr.GraphmlCompiler.Edges.GraphEdge;
 import com.htlgkr.GraphmlCompiler.Nodes.GraphGraphNode;
+import com.htlgkr.GraphmlCompiler.Nodes.GraphNode;
 import com.htlgkr.GraphmlCompiler.Nodes.NodeHelper;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.*;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
@@ -35,11 +37,11 @@ public class Main {
 
         Document doc = builder.parse(new File(filename));
         Element graphml = doc.getDocumentElement();
-        Element graph = (Element)graphml.getElementsByTagName("graph").item(0);
+        Element graph = NodeHelper.getFirstChildrenWithTag(graphml, "graph");
         return graph;
     }
 
     private static Iterable<GraphEdge> getEdges(Element graph) {
-        return () -> StreamSupport.stream(NodeHelper.getNodeIterable(graph.getElementsByTagName("edge")).spliterator(), false).map(GraphEdge::new).iterator();
+        return () -> StreamSupport.stream(NodeHelper.getNodeIterable(NodeHelper.getDirectChildrenWithTag(graph, "edge")).spliterator(), false).map(GraphEdge::new).iterator();
     }
 }

@@ -16,12 +16,7 @@ public abstract class GraphNode {
         id = nodeElement.getAttribute("id");
         incomingEdges = new ArrayList<>();
         outgoingEdges = new ArrayList<>();
-        try {
-            label = NodeHelper.getLabel(nodeElement);
-        } catch (Exception ex)
-        {
-            label = null;
-        }
+        label = NodeHelper.getLabel(nodeElement);
     }
 
     public String getId() {

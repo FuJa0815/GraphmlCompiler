@@ -7,12 +7,14 @@ import java.util.stream.Stream;
 
 public class GraphNodeFactory {
     public static GraphNode getGraphNode(Element nodeElement) {
-        return Stream.of(
-                getGraphGroupNode(nodeElement),
-                getGraphNodeFromElement(nodeElement))
-            .filter(Objects::nonNull)
-            .findFirst()
-            .orElseThrow(UnsupportedOperationException::new);
+        GraphNode tmp;
+        tmp = getGraphGroupNode(nodeElement);
+        if (tmp != null) return tmp;
+
+        tmp = getGraphNodeFromElement(nodeElement);
+        if (tmp != null) return tmp;
+
+        throw new UnsupportedOperationException();
     }
 
     private static GraphNode getGraphGroupNode(Element nodeElement) {

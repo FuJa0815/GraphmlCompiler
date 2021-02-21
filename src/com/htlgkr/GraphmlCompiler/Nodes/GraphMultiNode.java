@@ -7,5 +7,5 @@ public abstract class GraphMultiNode extends GraphNode {
         super(nodeElement);
     }
 
-    public abstract Iterable<GraphNode> GetSubGraphNodes();
+    public abstract Iterable<GraphNode> getSubGraphNodes();
 }
