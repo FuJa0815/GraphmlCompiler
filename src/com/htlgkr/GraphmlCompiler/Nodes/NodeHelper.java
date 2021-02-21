@@ -94,4 +94,10 @@ public final class NodeHelper {
         }
         return null;
     }
+
+    public static <T> List<T> iterableToList(Iterable<T> i) {
+        List<T> result = new ArrayList<>();
+        i.forEach(result::add);
+        return result;
+    }
 }

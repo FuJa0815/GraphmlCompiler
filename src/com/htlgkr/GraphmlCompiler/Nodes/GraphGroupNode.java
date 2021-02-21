@@ -2,6 +2,8 @@ package com.htlgkr.GraphmlCompiler.Nodes;
 
 import org.w3c.dom.Element;
 
+import java.util.List;
+
 public class GraphGroupNode extends GraphMultiNode {
     GraphGraphNode graphNode;
     public GraphGroupNode(Element nodeElement) {
@@ -10,7 +12,7 @@ public class GraphGroupNode extends GraphMultiNode {
     }
 
     @Override
-    public Iterable<GraphNode> getSubGraphNodes() {
+    public List<GraphNode> getSubGraphNodes() {
         return graphNode.getSubGraphNodes();
     }
 }

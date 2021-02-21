@@ -11,6 +11,7 @@ import javax.xml.parsers.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class Main {
@@ -41,7 +42,7 @@ public class Main {
         return graph;
     }
 
-    private static Iterable<GraphEdge> getEdges(Element graph) {
-        return () -> StreamSupport.stream(NodeHelper.getNodeIterable(NodeHelper.getDirectChildrenWithTag(graph, "edge")).spliterator(), false).map(GraphEdge::new).iterator();
+    private static List<GraphEdge> getEdges(Element graph) {
+        return StreamSupport.stream(NodeHelper.getNodeIterable(NodeHelper.getDirectChildrenWithTag(graph, "edge")).spliterator(), false).map(GraphEdge::new).collect(Collectors.toList());
     }
 }
