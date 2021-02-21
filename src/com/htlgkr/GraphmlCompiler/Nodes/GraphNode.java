@@ -10,11 +10,18 @@ public abstract class GraphNode {
     private String id;
     private List<GraphEdge> incomingEdges;
     private List<GraphEdge> outgoingEdges;
+    private String label;
 
     public GraphNode(Element nodeElement) {
         id = nodeElement.getAttribute("id");
         incomingEdges = new ArrayList<>();
         outgoingEdges = new ArrayList<>();
+        try {
+            label = NodeHelper.getLabel(nodeElement);
+        } catch (Exception ex)
+        {
+            label = null;
+        }
     }
 
     public String getId() {
@@ -36,5 +43,9 @@ public abstract class GraphNode {
 
     public List<GraphEdge> getOutgoingEdges() {
         return outgoingEdges;
+    }
+
+    public String getLabel() {
+        return label;
     }
 }
