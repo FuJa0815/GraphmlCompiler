@@ -65,7 +65,7 @@ public final class NodeHelper {
 
         return null;
     }
-
+    
     public static boolean executeForNode(GraphNode topNode, String nodeId, Consumer<GraphNode> action) {
         if (topNode.getId().equals(nodeId)) {
             action.accept(topNode);

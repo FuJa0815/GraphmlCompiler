@@ -27,8 +27,8 @@ public class Main {
         GraphGraphNode topGraphNode = new GraphGraphNode(graph);
         for (GraphEdge edge : getEdges(graph))
         {
-            NodeHelper.executeForNode(topGraphNode, edge.getSourceId(), node -> node.addOutgoingEdge(edge));
-            NodeHelper.executeForNode(topGraphNode, edge.getTargetId(), node -> node.addIncomingEdge(edge));
+            NodeHelper.getNodeWithId(topGraphNode, edge.getSourceId()).addOutgoingEdge(edge);
+            NodeHelper.getNodeWithId(topGraphNode, edge.getTargetId()).addIncomingEdge(edge);
         }
 
         NodeHelper.translateFromTopNode(topGraphNode);
