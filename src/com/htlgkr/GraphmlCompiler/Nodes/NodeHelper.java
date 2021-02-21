@@ -5,9 +5,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.StreamSupport;
 
@@ -65,43 +63,76 @@ public final class NodeHelper {
 
         return null;
     }
-    
-    public static boolean executeForNode(GraphNode topNode, String nodeId, Consumer<GraphNode> action) {
-        if (topNode.getId().equals(nodeId)) {
-            action.accept(topNode);
-            return true;
-        }
-        if (topNode instanceof GraphMultiNode) {
-            for (GraphNode subNode : ((GraphMultiNode) topNode).getSubGraphNodes()) {
-                if (executeForNode(subNode, nodeId, action))
-                    return true;
-            }
-        }
-        return false;
-    }
 
-    public static String translateFromTopNode(GraphGraphNode topnode) {
+    public static String translateFromTopNode(GraphNode topnode) {
         String content = "public class ElectionUtilGraphml { ";
 
-        for (GraphNode node : topnode.getSubGraphNodes()) {
-            if (node instanceof GraphGraphNode) {
-                content += node.getLabel() + "{";
-            }
-            else if (node instanceof GraphInputNode) {
-                content += translateFromTopNodeRec(topnode, node.getOutgoingEdges());
+        for (GraphNode node : ((GraphGraphNode) topnode).getSubGraphNodes()) {
+            if (node instanceof GraphInputNode) {
+                content += translateFromTopNodeRec(topnode, node.getOutgoingEdges(), new HashSet<>(), null, false);
             }
         }
 
-        content += "} }";
+        content += " }";
         return content;
     }
 
-    private static String translateFromTopNodeRec(GraphGraphNode topnode, Iterable<GraphEdge> iterable) {
+    private static String translateFromTopNodeRec(GraphNode topnode, List<GraphEdge> edges, Set<GraphForNode> visitedFors, GraphNode elseTarget, boolean ifClosed) {
         String content = "";
-        List<GraphEdge> edges = iterableToList(iterable);
+
+        if (edges.isEmpty()) {
+            return "";
+        }
 
         for (GraphEdge edge : edges) {
+            GraphNode node = getNodeWithId(topnode, edge.getTargetId());
 
+            if (node instanceof GraphForNode) {
+                if (visitedFors.add((GraphForNode) node)) {
+                    content += node.getLabel() + " { ";
+                    content += translateFromTopNodeRec(topnode, node.getOutgoingEdges(), visitedFors, elseTarget, ifClosed);
+                }
+                else {
+                    content += " } ";
+                }
+            }
+            else if (node instanceof GraphIfNode) {
+                content += node.getLabel() + " { ";
+
+                if (getNodeWithId(topnode, edge.getTargetId()).equals(elseTarget)) {
+                    if (!ifClosed) {
+                        content += " } else {";
+                        ((GraphIfNode) node).setIfClosed(true);
+                    }
+                    else {
+                        content += " } ";
+                    }
+                    elseTarget = null;
+                }
+
+                String elseTargetId = node.getOutgoingEdges().stream()
+                        .filter(e -> e.getEdgeType() == GraphEdge.GraphEdgeType.DEF_FLOW)
+                        .map(e -> e.getTargetId())
+                        .findFirst()
+                        .orElse("");
+
+                if (elseTargetId.equals("")) {
+                    elseTarget = getNodeWithId(topnode, node.getIncomingEdges().get(0).getSourceId());
+                }
+                else {
+                    elseTarget = getNodeWithId(topnode, elseTargetId);
+                }
+
+                while (!(elseTarget.getIncomingEdges().size() >= 2)) {
+                    elseTarget = getNodeWithId(topnode, elseTarget.getOutgoingEdges().get(0).getTargetId());
+                }
+
+                content += translateFromTopNodeRec(topnode, node.getOutgoingEdges(), visitedFors, elseTarget, ifClosed);
+            }
+            else if (node instanceof GraphTaskNode) {
+                content += node.getLabel();
+                content += translateFromTopNodeRec(topnode, node.getOutgoingEdges(), visitedFors, elseTarget, ifClosed);
+            }
         }
 
         return content;
