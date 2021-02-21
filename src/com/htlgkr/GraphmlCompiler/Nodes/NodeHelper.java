@@ -50,6 +50,21 @@ public final class NodeHelper {
         return yNodeLabel.getTextContent();
     }
 
+    public static GraphNode getNodeWithId(GraphNode topNode, String id) {
+        if (topNode.getId().equals(id))
+            return topNode;
+
+        if (topNode instanceof GraphMultiNode) {
+            GraphMultiNode topMultiNode = (GraphMultiNode) topNode;
+            for (GraphNode subNode : topMultiNode.getSubGraphNodes()) {
+                GraphNode tmp = getNodeWithId(subNode, id);
+                if (tmp != null) return tmp;
+            }
+        }
+
+        return null;
+    }
+
     public static boolean executeForNode(GraphNode topNode, String nodeId, Consumer<GraphNode> action) {
         if (topNode.getId().equals(nodeId)) {
             action.accept(topNode);
