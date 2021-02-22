@@ -5,8 +5,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import java.lang.reflect.Array;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.StreamSupport;
 
 public final class NodeHelper {
@@ -68,71 +68,74 @@ public final class NodeHelper {
         String content = "public class ElectionUtilGraphml { ";
 
         for (GraphNode node : ((GraphGraphNode) topnode).getSubGraphNodes()) {
-            if (node instanceof GraphInputNode) {
-                content += translateFromTopNodeRec(topnode, node.getOutgoingEdges(), new HashSet<>(), null, false);
+            if (node instanceof GraphGroupNode) {
+                content += node.getLabel() + " { ";
             }
         }
 
-        content += " }";
+        for (GraphNode node : ((GraphGraphNode) topnode).getSubGraphNodes()) {
+            if (node instanceof GraphInputNode) {
+                content += translateFromTopNodeRec(topnode, node.getOutgoingEdges().get(0), new ArrayList<>(), new ArrayList<>());
+            }
+        }
+
+        content += " } }";
         return content;
     }
 
-    private static String translateFromTopNodeRec(GraphNode topnode, List<GraphEdge> edges, Set<GraphForNode> visitedFors, GraphNode elseTarget, boolean ifClosed) {
+    private static String translateFromTopNodeRec(GraphNode topnode, GraphEdge edge, List<GraphForNode> visitedFors, List<GraphIfNode> visitedIfs) {
         String content = "";
 
-        if (edges.isEmpty()) {
-            return "";
+        GraphNode node = getNodeWithId(topnode, edge.getTargetId());
+
+        for(GraphIfNode ifNode : visitedIfs) {
+            if (ifNode.nextNodeWithTwoOrMore.equals(node)) {
+                if (ifNode.closed) {
+                    content += " } ";
+                    visitedIfs.remove(ifNode);
+                    return content + translateFromTopNodeRec(topnode, edge, visitedFors, visitedIfs);
+                } else {
+                    ifNode.closed = true;
+                    Optional<GraphEdge> elsePath = ifNode.getOutgoingEdges().stream().filter(p -> p.getEdgeType() == GraphEdge.GraphEdgeType.DEF_FLOW).findFirst();
+                    if (elsePath.isPresent()) {
+                        content += " } else { ";
+                        return content + translateFromTopNodeRec(topnode, elsePath.get(), visitedFors, visitedIfs);
+                    }
+                    content += " } ";
+                    visitedIfs.remove(ifNode);
+                    return content + translateFromTopNodeRec(topnode, edge, visitedFors, visitedIfs);
+                }
+            }
         }
 
-        for (GraphEdge edge : edges) {
-            GraphNode node = getNodeWithId(topnode, edge.getTargetId());
-
-            if (node instanceof GraphForNode) {
-                if (visitedFors.add((GraphForNode) node)) {
-                    content += node.getLabel() + " { ";
-                    content += translateFromTopNodeRec(topnode, node.getOutgoingEdges(), visitedFors, elseTarget, ifClosed);
-                }
-                else {
-                    content += " } ";
-                }
-            }
-            else if (node instanceof GraphIfNode) {
+        if (node instanceof GraphForNode) {
+            if (visitedFors.contains(node)){
+                content += " } " + translateFromTopNodeRec(topnode, node.getOutgoingEdges().stream().filter(p -> p.getEdgeType() == GraphEdge.GraphEdgeType.DEF_FLOW).findFirst().get(), visitedFors, visitedIfs);
+            } else
+            {
+                visitedFors.add((GraphForNode) node);
                 content += node.getLabel() + " { ";
-
-                if (getNodeWithId(topnode, edge.getTargetId()).equals(elseTarget)) {
-                    if (!ifClosed) {
-                        content += " } else {";
-                        ((GraphIfNode) node).setIfClosed(true);
-                    }
-                    else {
-                        content += " } ";
-                    }
-                    elseTarget = null;
-                }
-
-                String elseTargetId = node.getOutgoingEdges().stream()
-                        .filter(e -> e.getEdgeType() == GraphEdge.GraphEdgeType.DEF_FLOW)
-                        .map(e -> e.getTargetId())
-                        .findFirst()
-                        .orElse("");
-
-                if (elseTargetId.equals("")) {
-                    elseTarget = getNodeWithId(topnode, node.getIncomingEdges().get(0).getSourceId());
-                }
-                else {
-                    elseTarget = getNodeWithId(topnode, elseTargetId);
-                }
-
-                while (!(elseTarget.getIncomingEdges().size() >= 2)) {
-                    elseTarget = getNodeWithId(topnode, elseTarget.getOutgoingEdges().get(0).getTargetId());
-                }
-
-                content += translateFromTopNodeRec(topnode, node.getOutgoingEdges(), visitedFors, elseTarget, ifClosed);
+                content += translateFromTopNodeRec(topnode, node.getOutgoingEdges().stream().filter(p -> p.getEdgeType() == GraphEdge.GraphEdgeType.SEQ_FLOW).findFirst().get(), visitedFors, visitedIfs);
             }
-            else if (node instanceof GraphTaskNode) {
-                content += node.getLabel();
-                content += translateFromTopNodeRec(topnode, node.getOutgoingEdges(), visitedFors, elseTarget, ifClosed);
-            }
+        }
+        else if (node instanceof GraphIfNode) {
+            content += node.getLabel() + " { ";
+
+            GraphNode prevWith2OrMore;
+            for(prevWith2OrMore = node;
+                prevWith2OrMore.getIncomingEdges().size() < 2;
+                prevWith2OrMore = getNodeWithId(topnode, prevWith2OrMore.getElsePathNode())) { }
+
+            ((GraphIfNode)node).nextNodeWithTwoOrMore = prevWith2OrMore;
+            Collections.reverse(visitedIfs);
+            visitedIfs.add((GraphIfNode) node);
+            Collections.reverse(visitedIfs);
+
+            content += translateFromTopNodeRec(topnode, node.getOutgoingEdges().stream().filter(p -> p.getEdgeType() == GraphEdge.GraphEdgeType.SEQ_FLOW).findFirst().get(), visitedFors, visitedIfs);
+        }
+        else if (node instanceof GraphTaskNode) {
+            content += node.getLabel();
+            content += translateFromTopNodeRec(topnode, node.getOutgoingEdges().get(0), visitedFors, visitedIfs);
         }
 
         return content;

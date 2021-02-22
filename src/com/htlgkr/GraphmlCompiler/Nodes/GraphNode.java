@@ -57,4 +57,8 @@ public abstract class GraphNode {
     public int hashCode() {
         return Objects.hash(id);
     }
+
+    public String getElsePathNode() {
+        return getOutgoingEdges().get(0).getTargetId();
+    }
 }
