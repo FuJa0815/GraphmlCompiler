@@ -18,7 +18,7 @@ public class Main {
     public static void main(String[] args) {
         Element graph;
         try {
-            graph = getTopGraphElement("D:\\Programmieren\\AUD\\GraphmlCompiler\\GraphmlCompiler\\ElectionUtilBasic.graphml");
+            graph = getTopGraphElement("ElectionUtilBasic.graphml");
         } catch (ParserConfigurationException | IOException | SAXException e) {
             e.printStackTrace();
             return;
